@@ -1,0 +1,97 @@
+doctype html
+html
+    head
+        title= title
+        link(rel='stylesheet', href='/stylesheets/style.css')
+        case backgroundMapType
+            when "Google"
+                script(src="https://maps.googleapis.com/maps/api/js?key=" + googleToken, async, defer)
+                link(rel='stylesheet', href='https://unpkg.com/leaflet@1.5.1/dist/leaflet.css', integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="")
+                script(src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js", integrity= "sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==", crossorigin="")
+                script(src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js')
+            when "Here"
+                link(rel='stylesheet', href='https://unpkg.com/leaflet@1.5.1/dist/leaflet.css', integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="")
+                script(src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js", integrity= "sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==", crossorigin="")
+                script(src="/javascripts/leaflet-tilelayer-here.js")
+            when "Bing"
+                link(rel='stylesheet', href='https://unpkg.com/leaflet@1.5.1/dist/leaflet.css', integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="")
+                script(src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js", integrity= "sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==", crossorigin="")
+                script(src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise")
+                script(src="/javascripts/leaflet-bing-layer.js")
+            default
+                link(rel='stylesheet', href='https://unpkg.com/leaflet@1.5.1/dist/leaflet.css', integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="")
+                script(src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js", integrity= "sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==", crossorigin="")
+
+    body
+        ul.menu
+            li.active 
+                a(href="publicmap") Sigfox public map
+            li 
+                a(href="monarchmap") Sigfox Monarch coverage map
+        ul.caption
+            li.first Live coverage
+            li.second Country under roll-out
+        block content
+
+        script.
+            const sigfoxMapUrl = "#{sigfoxMapUrl}";
+            const backgroundMapUrl = "#{backgroundMap}";
+            const backgroundMapType = "#{backgroundMapType}";
+
+            const countries = !{countries} ;
+            const googleStyle = !{googleStyle} ;
+            const hereAppId = "!{hereAppId}" ;
+            const hereAppCode = "!{hereAppCode}" ;
+            const bingKey = "!{bingKey}" ;
+
+            const map = L.map('mapid', {
+                fullscreenControl: true,
+                zoomControl: true,
+                maxZoom: 11,
+                minZoom: 4,
+                worldCopyJump: true
+            }).setView([44, 0], 3);
+
+            const style_countries = {
+                "color": "#7E0BFF",
+                "weight": 0,
+                zIndex: 90,
+                fillOpacity: 0.4,
+                pane: 'tilePane'
+            };
+
+            // Adds the openstreetmap layer
+            if ("Google" == backgroundMapType) {
+                L.gridLayer.googleMutant({
+                    type: 'roadmap',
+                    styles: googleStyle,
+                    maxZoom: 11
+                }).addTo(map);
+            } if ("Here" == backgroundMapType) {
+                L.tileLayer.here({
+                    scheme: 'reduced.day',
+                    appId: hereAppId,
+                    appCode: hereAppCode,
+                    maxZoom: 11}).addTo(map);
+            } if ("Bing" == backgroundMapType) {
+                L.tileLayer.bing({
+                    bingMapsKey: bingKey,
+                    imagerySet: "CanvasLight",
+                    maxZoom: 11}).addTo(map);
+            } else {
+                L.tileLayer(backgroundMapUrl,{
+                    maxZoom: 11
+                }).addTo(map);
+            }
+            L.geoJSON(countries, style_countries).addTo(map);
+            L.tileLayer(sigfoxMapUrl,{
+                zoomOffset: 0,
+                maxZoom: 11,
+                maxNativeZoom: 11,
+                zIndex: 500,
+                opacity: 0.7,
+                attribution: ' <a href="https://sigfox.com">sigfox</a>'
+            }).addTo(map);
+
+
+
